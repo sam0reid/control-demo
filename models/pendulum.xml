@@ -8,14 +8,14 @@
         <!-- Base of the pendulum -->
         <body name="base" pos="0 0 2">
             <!-- Hinge joint allowing rotation -->
-            <joint name="hinge" type="hinge" pos="0 0 0" axis="0 1 0" />
+            <joint name="hinge" type="hinge" pos="0 0 0" axis="0 1 0" damping="0.1"/>
             
             <!-- Pendulum rod -->
-            <geom name="rod" type="capsule" fromto="0 0 0 0 0 -1" size="0.05" rgba="0.2 0.5 0.8 1" />
+            <geom name="rod" type="capsule" fromto="0 0 0 0 0 -1" size="0.05" rgba="0.2 0.5 0.8 1" mass="0" />
             
             <!-- End of pendulum (optional visual mass) -->
             <body name="tip" pos="0 0 -1">
-                <geom name="tip_mass" type="sphere" size="0.1" pos="0 0 0" mass="0.1" rgba="0.8 0.2 0.2 1" />
+                <geom name="tip_mass" type="sphere" size="0.1" pos="0 0 0" mass="1" rgba="0.8 0.2 0.2 1" />
             </body>
         </body>
     </worldbody>
