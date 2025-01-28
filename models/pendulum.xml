@@ -1,0 +1,27 @@
+<mujoco model="simple_pendulum">
+    <compiler angle="radian" />
+
+    <!-- Floor and lighting -->
+    <include file="checker.xml" />
+
+    <worldbody>
+        <!-- Base of the pendulum -->
+        <body name="base" pos="0 0 2">
+            <!-- Hinge joint allowing rotation -->
+            <joint name="hinge" type="hinge" pos="0 0 0" axis="0 1 0" />
+            
+            <!-- Pendulum rod -->
+            <geom name="rod" type="capsule" fromto="0 0 0 0 0 -1" size="0.05" rgba="0.2 0.5 0.8 1" />
+            
+            <!-- End of pendulum (optional visual mass) -->
+            <body name="tip" pos="0 0 -1">
+                <geom name="tip_mass" type="sphere" size="0.1" pos="0 0 0" mass="0.1" rgba="0.8 0.2 0.2 1" />
+            </body>
+        </body>
+    </worldbody>
+
+    <actuator>
+        <!-- Motor to apply torque at the hinge -->
+        <motor name="hinge_motor" joint="hinge" />
+    </actuator>
+</mujoco>

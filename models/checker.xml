@@ -1,0 +1,20 @@
+<mujoco model="checker">
+
+    <asset>
+        <!-- Texture for the checkered floor -->
+        <texture name="checkered" type="2d" builtin="checker" width="512" height="512" 
+                 rgb1="0.9 0.9 0.9" rgb2="0.1 0.1 0.1" />
+        <material name="checkered_mat" texture="checkered" texrepeat="20 20"/>
+    </asset>
+
+    <worldbody>
+
+        <!-- Default lighting -->
+        <light name="light1" pos="0 0 3" dir="0 0 -1" diffuse="1 1 1" specular="0.3 0.3 0.3" />
+        <light name="light2" pos="3 3 3" dir="-1 -1 -1" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" />
+
+        <!-- Checkered Floor -->
+        <geom name="floor" type="plane" pos="0 0 0" size="10 10 0.1" material="checkered_mat" />
+
+    </worldbody>
+</mujoco>
