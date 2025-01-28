@@ -8,7 +8,9 @@ authors = [{name="Sam Reid", email="sam0reid@gmail.com"}]
 dynamic = ["version"]
 dependencies = [
     "numpy", 
+    "matplotlib",
     "mujoco>=3.2.7",
+    "scipy"
 ]
 
 [project.optional-dependencies]
