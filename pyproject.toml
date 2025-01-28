@@ -3,8 +3,25 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="control-demo"
-authors=[{name="Sam Reid", email="sam0reid@gmail.com"}]
+name = "control-demo"
+authors = [{name="Sam Reid", email="sam0reid@gmail.com"}]
 dynamic = ["version"]
+dependencies = [
+    "numpy", 
+    "mujoco>=3.2.7",
+]
 
-dependencies = ["numpy", "mujoco>=3.2.7"]
+[project.optional-dependencies]
+dev = [
+    "black",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+simulate = "scripts.simulate:main"
