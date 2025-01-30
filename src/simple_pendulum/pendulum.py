@@ -215,6 +215,12 @@ def main(
     start = time.time()
     last_frame = start
     with mjv.launch_passive(m, d, show_left_ui=False, show_right_ui=False) as viewer:
+
+        viewer.cam.lookat[:] = np.array([0, 0, 2])
+        viewer.cam.distance = 5.0
+        viewer.cam.azimuth = 45
+        viewer.cam.elevation = -30
+
         while viewer.is_running():
             if control_strategy == "lqr":
                 swing_up_lqr(m, d, pendulum, lqr_gain)
