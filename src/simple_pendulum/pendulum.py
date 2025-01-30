@@ -15,7 +15,7 @@ from scipy.linalg import solve_continuous_are
 @dataclass
 class PendulumMujocoConfiguration:
     """
-    Configuration for a simple pendulum in Mujoco with a single revolute joint, single actuator.
+    Configuration for a simple pendulum in MuJoCo with a single revolute joint, and single actuator.
     """
 
     base_body_name: str
@@ -58,7 +58,8 @@ def swing_up_lqr(
     d: mj.MjData,
     p: PendulumMujocoConfiguration,
     lqr_gain: np.ndarray,
-    k: float = 0.1,
+    k: float = 0.05,
+    transition_height_fraction: float = 0.5,
 ):
     """
     Swing up the pendulum by controlling the motor torque.
@@ -81,15 +82,11 @@ def swing_up_lqr(
 
     # Swing-up phase
     height = -np.cos(angle) * length
-    if height > 0.5 * length:
+    if height > transition_height_fraction * length:
         # Switch to LQR control
         d.ctrl[actuator_id] = -lqr_gain @ np.array(
             [np.sign(angle) * (np.abs(angle) - np.pi), velocity]
         )
-        print(
-            f"LQR: {d.ctrl[actuator_id]:.3f}, Angle: {angle:.3f}, Velocity: {velocity:.3f}, Height: {height:.3f}"
-        )
-        return
     else:
         # Energy-based control
         potential_energy = -1 * mass * gravity * length * np.cos(angle)
@@ -98,9 +95,6 @@ def swing_up_lqr(
         energy_difference = kinetic_energy + potential_energy - desired_energy
 
         d.ctrl[actuator_id] = k * energy_difference * velocity
-        print(
-            f"ESC: {d.ctrl[actuator_id]:.3f}, Angle: {angle:.3f}, Velocity: {velocity:.3f}, Height: {height:.3f}"
-        )
 
 
 def lqr(m: mj.MjModel, p: PendulumMujocoConfiguration) -> np.ndarray:
@@ -114,8 +108,9 @@ def lqr(m: mj.MjModel, p: PendulumMujocoConfiguration) -> np.ndarray:
     A = np.array([[0, 1], [-m.opt.gravity[2] / length, 0]])
     B = np.array([[0], [1 / (mass * length**2)]])
 
-    Q = np.array([[1000, 0], [0, 100]])  # State weighting
-    R = np.array([[0.001]])  # Control effort weighting
+    # Weightings below determine controller behavior
+    Q = np.array([[100, 0], [0, 10]])  # State weighting
+    R = np.array([[0.01]])  # Control effort weighting
 
     P = solve_continuous_are(A, B, Q, R)
     K = np.linalg.inv(R) @ B.T @ P
@@ -150,7 +145,6 @@ def pd_control(
 def main(
     control_strategy: str = "lqr",
 ):
-
     frame_delay = 0.0166667
     pendulum = PendulumMujocoConfiguration.default_pendulum()
 
@@ -159,12 +153,13 @@ def main(
 
     lqr_gain = lqr(m, pendulum)
 
-    # Give the pendulum a little push
-    d.qvel[0] = 0.3
+    angle = np.random.uniform(-np.pi / 2, np.pi / 2)
+    d.qpos[pendulum.get_joint_qposadr(m)] = angle
+    mj.mj_forward(m, d)
 
     start = time.time()
     last_frame = start
-    with mjv.launch_passive(m, d) as viewer:
+    with mjv.launch_passive(m, d, show_left_ui=False, show_right_ui=False) as viewer:
         while viewer.is_running():
             mj.mj_step(m, d)
 
@@ -182,14 +177,14 @@ def main(
 
             while time.time() - start < d.time:
                 pass
+
     return 0
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if len(args) == 0:
-        print(main("lqr"))
-    elif args[0] == "lqr":
-        print(main())
-    elif args[0] == "pd":
-        print(main())
+    
+    if len(args) == 0: 
+        main() 
+    else: 
+        main(args[0])
