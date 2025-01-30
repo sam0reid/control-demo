@@ -9,7 +9,57 @@ import mujoco as mj
 import mujoco.viewer as mjv
 
 import numpy as np
+
+import matplotlib
+import matplotlib.pyplot as plt
+
 from scipy.linalg import solve_continuous_are
+
+matplotlib.use('TkAgg')
+
+class LivePlot:
+    def __init__(self, max_points: int = 10000):
+        plt.ion()
+        self._fig, self._ax = plt.subplots()
+        self._ax.legend()
+        self._max_points = max_points
+
+        self._lines = {}
+        self._xdata = {}
+        self._ydata = {}
+
+    def __del__(self):
+        plt.ioff()
+        plt.show()
+
+    def add_line(self, label: str):
+        line, = self._ax.plot([], [], label=label)
+        self._lines[label] = line
+        self._xdata[label] = np.array([])
+        self._ydata[label] = np.array([])
+
+    def set_xlabel(self, label: str):
+        self._ax.set_xlabel(label)
+    
+    def set_ylabel(self, label: str):
+        self._ax.set_ylabel(label)
+
+    def update_line(self, label: str, x: np.ndarray, y: np.ndarray):
+        self._xdata[label] = np.append(self._xdata[label], x)
+        self._ydata[label] = np.append(self._ydata[label], y)
+
+        if len(self._xdata[label]) > self._max_points:
+            self._xdata[label] = self._xdata[label][-self._max_points:]
+            self._ydata[label] = self._ydata[label][-self._max_points:] 
+
+        self._lines[label].set_xdata(self._xdata[label])
+        self._lines[label].set_ydata(self._ydata[label])
+
+    def draw(self):
+        self._ax.relim()
+        self._ax.autoscale_view()
+        self._fig.canvas.flush_events()
+        plt.draw()
 
 
 @dataclass
@@ -157,12 +207,15 @@ def main(
     d.qpos[pendulum.get_joint_qposadr(m)] = angle
     mj.mj_forward(m, d)
 
+    live_plot = LivePlot()
+    live_plot.add_line("angle [rad]")
+    live_plot.set_xlabel("time [s]")
+    live_plot.set_ylabel("angle [rad]")
+
     start = time.time()
     last_frame = start
     with mjv.launch_passive(m, d, show_left_ui=False, show_right_ui=False) as viewer:
         while viewer.is_running():
-            mj.mj_step(m, d)
-
             if control_strategy == "lqr":
                 swing_up_lqr(m, d, pendulum, lqr_gain)
             elif control_strategy == "pd":
@@ -170,9 +223,14 @@ def main(
             else:
                 print(f"Invalid control strategy: {control_strategy}")
                 return 1
+            
+            mj.mj_step(m, d)
+            
+            live_plot.update_line("angle [rad]", time.time() - start, d.qpos[pendulum.get_joint_qposadr(m)])
 
             if time.time() - last_frame > frame_delay:
                 viewer.sync()
+                live_plot.draw()
                 last_frame = time.time()
 
             while time.time() - start < d.time:
